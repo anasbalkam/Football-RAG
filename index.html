@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Football Reference AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f5f0;--white:#ffffff;--g950:#071a0c;--g800:#0f3020;
+  --g600:#1a5c30;--g500:#267a42;--g400:#4aaa65;--g200:#aad8b8;
+  --g100:#dff0e6;--g50:#f0f9f3;--text:#0c1a0e;--text2:#3d5c42;
+  --text3:#7a9a80;--border:#d4e6d8;--border2:#e8f2ea;
+  --shadow:0 4px 24px rgba(10,40,20,0.08);--shadow2:0 1px 4px rgba(10,40,20,0.06);
+  --r:20px;--r-sm:10px;
+}
+html,body{height:100%;width:100%;background:var(--bg);color:var(--text);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;}
+.app{display:flex;flex-direction:column;height:100vh;width:100%;}
+
+/* NAV */
+nav{width:100%;background:var(--white);border-bottom:1px solid var(--border2);flex-shrink:0;z-index:10;}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:15px 48px;max-width:1200px;margin:0 auto;}
+.brand{display:flex;align-items:center;gap:11px;}
+.brand-mark{width:36px;height:36px;background:var(--g950);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.brand-mark svg{width:20px;height:20px;}
+.brand-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--g950);letter-spacing:-0.3px;}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.nav-pill{display:flex;align-items:center;gap:6px;background:var(--g50);border:1px solid var(--g100);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:500;color:var(--g600);}
+.nav-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--g400);animation:blink 2.5s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+
+/* NEW CHAT BUTTON */
+.new-chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.new-chat-btn:hover {
+  border-color: var(--g950);
+  color: var(--g950);
+  background: var(--g50);
+}
+
+/* CHAT */
+.chat{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:var(--bg);scrollbar-width:none;}
+.chat::-webkit-scrollbar{display:none;}
+.chat-body{width:100%;max-width:800px;margin:0 auto;padding:32px 32px 12px;display:flex;flex-direction:column;flex:1;}
+
+/* EMPTY */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;text-align:center;padding:20px 0 40px;animation:fadeIn 0.5s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.pitch-wrap{width:164px;height:110px;}
+.pitch-svg{width:100%;height:100%;animation:float 4s ease-in-out infinite;filter:drop-shadow(0 8px 24px rgba(10,40,20,0.18));}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.empty-greeting{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--g400);}
+.empty-title{font-family:'Syne',sans-serif;font-size:34px;font-weight:800;color:var(--g950);letter-spacing:-0.5px;line-height:1.15;margin-top:5px;}
+.empty-sub{font-size:15px;color:var(--text2);max-width:400px;line-height:1.8;font-weight:300;margin-top:2px;}
+.topics{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:540px;}
+.topic{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:7px 18px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);transition:all 0.2s;white-space:nowrap;}
+.topic:hover{background:var(--g950);border-color:var(--g950);color:var(--white);transform:translateY(-1px);}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:540px;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:16px 18px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:10px;transition:all 0.22s;}
+.card:hover{box-shadow:var(--shadow);border-color:var(--g200);transform:translateY(-2px);}
+.card-icon{width:32px;height:32px;border-radius:8px;background:var(--g50);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.card-text{font-size:13px;font-weight:500;color:var(--text);line-height:1.45;}
+.card-tag{font-size:11px;color:var(--text3);}
+
+/* MESSAGES */
+.msg-group{display:flex;flex-direction:column;gap:2px;margin-bottom:14px;animation:msgIn 0.3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.msg-row{display:flex;align-items:flex-end;gap:10px;}
+.msg-row.user{flex-direction:row-reverse;}
+.avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+.avatar.bot{background:var(--g950);}
+.avatar.bot svg{width:16px;height:16px;}
+.avatar.user{background:var(--g100);color:var(--g600);}
+.bubble{max-width:76%;padding:13px 17px;font-size:14px;line-height:1.8;word-break:break-word;white-space:pre-wrap;}
+.bubble.bot{background:var(--white);border:1px solid var(--border2);border-radius:18px 18px 18px 4px;box-shadow:var(--shadow2);color:var(--text);}
+.bubble.user{background:var(--g950);color:rgba(255,255,255,0.95);border-radius:18px 18px 4px 18px;}
+.bubble.err{background:#fff5f5;border:1px solid #fecaca;border-radius:18px 18px 18px 4px;color:#b91c1c;}
+.msg-time{font-size:10px;color:var(--text3);padding:0 4px;opacity:0;transition:opacity 0.2s;align-self:flex-end;margin-bottom:4px;}
+.msg-group:hover .msg-time{opacity:1;}
+.typing-row{display:flex;align-items:flex-end;gap:10px;margin-bottom:14px;}
+.typing-bubble{background:var(--white);border:1px solid var(--border2);border-radius:18px 18px 18px 4px;box-shadow:var(--shadow2);padding:14px 18px;display:flex;gap:5px;align-items:center;}
+.t-dot{width:7px;height:7px;border-radius:50%;background:var(--g200);animation:tdot 1.3s ease-in-out infinite;}
+.t-dot:nth-child(2){animation-delay:.2s}.t-dot:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,60%,100%{transform:scale(1);background:var(--g200)}30%{transform:scale(1.4);background:var(--g400)}}
+.scroll-anchor{height:1px;margin-top:8px;}
+
+/* INPUT BAR */
+.inputbar{flex-shrink:0;width:100%;background:var(--bg);padding:12px 0 26px;}
+.inputbar-inner{max-width:800px;margin:0 auto;padding:0 32px;}
+.input-card{background:var(--white);border:1.5px solid var(--border);border-radius:24px;box-shadow:var(--shadow);transition:border-color 0.2s,box-shadow 0.2s;overflow:hidden;}
+.input-card:focus-within{border-color:var(--g400);box-shadow:var(--shadow),0 0 0 4px rgba(74,170,101,0.1);}
+.input-top{display:flex;align-items:flex-end;gap:10px;padding:14px 14px 10px 22px;}
+#q{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;line-height:1.5;resize:none;min-height:26px;max-height:140px;padding:0;font-weight:400;}
+#q::placeholder{color:var(--text3);}
+.send{width:40px;height:40px;border-radius:14px;border:none;background:var(--g950);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.send:hover{background:var(--g800);transform:scale(1.06);}
+.send:active{transform:scale(0.94);}
+.send:disabled{background:var(--border);cursor:not-allowed;transform:none;}
+.send svg{width:17px;height:17px;}
+.input-bottom{display:flex;justify-content:space-between;align-items:center;padding:0 22px 13px;}
+.input-hint{font-size:11px;color:var(--text3);}
+.char-wrap{font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums;opacity:0;transition:opacity 0.2s;}
+.char-wrap.show{opacity:1;}
+
+/* Structured bot response */
+.resp-greeting{font-size:14px;line-height:1.75;color:var(--text);margin-bottom:12px;}
+.resp-sections{display:flex;flex-direction:column;gap:8px;}
+.resp-section{background:var(--g50);border-radius:10px;padding:10px 14px;border-left:3px solid var(--g400);}
+.resp-label{font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--g500);display:block;margin-bottom:5px;}
+.resp-text{font-size:13.5px;line-height:1.7;color:var(--text);}
+.resp-source{font-size:12px;color:var(--text3);margin-top:12px;padding-top:10px;border-top:1px solid var(--border2);font-style:italic;}
+
+/* MOBILE POLISH */
+@media (max-width: 600px) {
+  .chat-body, .inputbar-inner { padding-left: 16px; padding-right: 16px; }
+  .bubble { max-width: 90%; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+<nav>
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.5" stroke="white" stroke-width="1.4"/><polygon points="10,7.2 11.8,5.8 14.2,8.2 12.8,10 10,9.2" fill="white"/><polygon points="10,7.2 8.2,5.8 5.8,8.2 7.2,10 10,9.2" fill="white"/><polygon points="10,12.8 11.8,14.2 14.2,11.8 12.8,10 10,10.8" fill="white"/><polygon points="10,12.8 8.2,14.2 5.8,11.8 7.2,10 10,10.8" fill="white"/></svg>
+      </div>
+      <span class="brand-name">Football Reference</span>
+    </div>
+    <div class="nav-right">
+      <div class="nav-pill"><div class="nav-pill-dot"></div>Ready</div>
+      <button class="new-chat-btn" id="new-chat-btn" aria-label="New Chat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        New Chat
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="chat" id="chat">
+  <div class="chat-body" id="chat-body">
+    <div class="empty" id="empty">
+      <div class="pitch-wrap">
+        <svg class="pitch-svg" viewBox="0 0 164 110" fill="none">
+          <rect width="164" height="110" rx="9" fill="#1a5c30"/>
+          <rect x="0" y="0" width="20.5" height="110" fill="rgba(0,0,0,0.04)"/>
+          <rect x="41" y="0" width="20.5" height="110" fill="rgba(0,0,0,0.04)"/>
+          <rect x="82" y="0" width="20.5" height="110" fill="rgba(0,0,0,0.04)"/>
+          <rect x="123" y="0" width="20.5" height="110" fill="rgba(0,0,0,0.04)"/>
+          <rect x="6" y="6" width="152" height="98" rx="2" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.6"/>
+          <line x1="82" y1="6" x2="82" y2="104" stroke="rgba(255,255,255,0.7)" stroke-width="1.6"/>
+          <circle cx="82" cy="55" r="19" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.6"/>
+          <circle cx="82" cy="55" r="2.2" fill="rgba(255,255,255,0.7)"/>
+          <rect x="6" y="29" width="30" height="52" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/>
+          <rect x="6" y="39" width="12" height="32" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.1"/>
+          <circle cx="29" cy="55" r="1.8" fill="rgba(255,255,255,0.6)"/>
+          <rect x="128" y="29" width="30" height="52" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/>
+          <rect x="146" y="39" width="12" height="32" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.1"/>
+          <circle cx="135" cy="55" r="1.8" fill="rgba(255,255,255,0.6)"/>
+          <path d="M6 15 A9 9 0 0 1 15 6" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.1"/>
+          <path d="M158 15 A9 9 0 0 0 149 6" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.1"/>
+          <path d="M6 95 A9 9 0 0 0 15 104" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.1"/>
+          <path d="M158 95 A9 9 0 0 1 149 104" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.1"/>
+          <rect x="0" y="43" width="6" height="24" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+          <rect x="158" y="43" width="6" height="24" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+        </svg>
+      </div>
+      <div>
+        <p class="empty-greeting">Your Football Reference</p>
+        <h1 class="empty-title">What do you want<br/>to know?</h1>
+        <p class="empty-sub">From Laws of the Game to discipline rules, case studies, and competition regulations — ask anything.</p>
+      </div>
+      <div class="topics" id="topics">
+        <div class="topic" data-q="What are the handball rules under current Laws?">Handball</div>
+        <div class="topic" data-q="When must a penalty kick be retaken?">Penalty kicks</div>
+        <div class="topic" data-q="What constitutes a straight red card offence?">Red cards</div>
+        <div class="topic" data-q="How does VAR decision protocol work?">VAR</div>
+        <div class="topic" data-q="What discipline rules apply after accumulating yellow cards?">Suspensions</div>
+        <div class="topic" data-q="What does a temporary dismissal (sin bin) involve?">Sin bin</div>
+        <div class="topic" data-q="What are the offside rules in full detail?">Offside</div>
+        <div class="topic" data-q="What happens during a drop ball situation?">Drop ball</div>
+      </div>
+      <div class="cards" id="cards">
+        <div class="card" data-q="Can a substituted player come back onto the pitch under any rule?"><div class="card-icon">🔄</div><div class="card-text">Can a substituted player re-enter the match?</div><div class="card-tag">Substitution rules</div></div>
+        <div class="card" data-q="What happens when a player receives two yellow cards in the same match?"><div class="card-icon">🟨</div><div class="card-text">Two yellows in one match — what happens?</div><div class="card-tag">Discipline</div></div>
+        <div class="card" data-q="Can a goalkeeper move before a penalty kick is struck?"><div class="card-icon">🧤</div><div class="card-text">Can the goalkeeper move before a penalty?</div><div class="card-tag">Penalty procedure</div></div>
+        <div class="card" data-q="What is the correct decision when the ball hits the referee and goes into the goal?"><div class="card-icon">⚽</div><div class="card-text">Ball hits the referee — what's the call?</div><div class="card-tag">Laws of the Game</div></div>
+      </div>
+    </div>
+    <div class="scroll-anchor" id="scroll-anchor"></div>
+  </div>
+</div>
+<div class="inputbar">
+  <div class="inputbar-inner">
+    <div class="input-card">
+      <div class="input-top">
+        <textarea id="q" rows="1" placeholder="Ask about football rules, decisions, cases…" maxlength="800"></textarea>
+        <button class="send" id="send-btn" aria-label="Send Message">
+          <svg viewBox="0 0 17 17" fill="none"><path d="M8.5 2.5L8.5 14.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M4 7L8.5 2.5L13 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="input-bottom">
+        <span class="input-hint">Enter to send &nbsp;·&nbsp; Shift+Enter for new line</span>
+        <span class="char-wrap" id="char-wrap"><span id="cc">0</span> / 800</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+// ── CONFIGURATION ──────────────────────────────────────────────────────────
+const WEBHOOK_URL = 'https://anasproject.app.n8n.cloud/webhook/097a86fe-0897-4331-a78e-c3304d5b5447';
+const REQUEST_FIELD = 'chatInput';
+const RESPONSE_FIELD = 'auto';
+
+// Generate or retrieve a unique Session ID for the user
+let sessionId = localStorage.getItem('fr_session');
+if (!sessionId) {
+  sessionId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+  localStorage.setItem('fr_session', sessionId);
+}
+
+const chatBody=document.getElementById('chat-body'),qa=document.getElementById('q');
+const sendBtn=document.getElementById('send-btn'),ccEl=document.getElementById('cc');
+const charWrap=document.getElementById('char-wrap'),anchor=document.getElementById('scroll-anchor');
+
+// New Chat Button Logic
+document.getElementById('new-chat-btn').addEventListener('click', () => {
+  localStorage.removeItem('fr_session');
+  window.location.reload();
+});
+
+qa.addEventListener('input',()=>{
+  qa.style.height='auto';qa.style.height=Math.min(qa.scrollHeight,140)+'px';
+  const len=qa.value.length;ccEl.textContent=len;charWrap.classList.toggle('show',len>0);
+});
+document.getElementById('topics').addEventListener('click',e=>{const t=e.target.closest('.topic');if(t){qa.value=t.dataset.q;qa.dispatchEvent(new Event('input'));qa.focus();}});
+document.getElementById('cards').addEventListener('click',e=>{const c=e.target.closest('.card');if(c){qa.value=c.dataset.q;qa.dispatchEvent(new Event('input'));qa.focus();}});
+qa.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go();}});
+sendBtn.addEventListener('click',go);
+let busy=false;
+
+function go(){
+  const q=qa.value.trim();if(!q||busy)return;
+  const url=WEBHOOK_URL;
+  
+  busy=true;sendBtn.disabled=true;qa.value='';qa.style.height='auto';ccEl.textContent='0';charWrap.classList.remove('show');
+  const emptyEl=document.getElementById('empty');
+  if(emptyEl){emptyEl.style.transition='opacity 0.2s';emptyEl.style.opacity='0';setTimeout(()=>emptyEl.remove(),200);}
+  appendMsg('user',q);const loader=appendLoader();scrollBottom();
+  
+  const body={};
+  body[REQUEST_FIELD]=q;
+  body['sessionId'] = sessionId;
+
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(r=>{if(!r.ok)throw new Error(`Server responded with ${r.status}`);return r.json();})
+    .then(d=>{loader.remove();appendMsg('bot', extract(d));})
+    .catch(e=>{loader.remove();appendMsg('err',`Connection failed.\n\n${e.message}\n\nPlease check your backend server status.`);})
+    .finally(()=>{busy=false;sendBtn.disabled=false;qa.focus();scrollBottom();});
+}
+
+// ── UNIVERSAL RESPONSE PARSER ──────────────────────────────────────────────
+
+function resolveData(d, depth = 0) {
+  if (depth > 10) return d;
+  if (Array.isArray(d)) return d.length ? resolveData(d[0], depth + 1) : '';
+  if (d === null || typeof d !== 'object') return d;
+  const entries = Object.entries(d);
+  const objEntries = entries.filter(([, v]) => v !== null && typeof v === 'object');
+  if (objEntries.length === 0) return d;
+  if (objEntries.length === 1) return resolveData(objEntries[0][1], depth + 1);
+  const WRAPPER_KEYS = ['output','response','json','data','result','content','answer','payload','body','message'];
+  for (const k of WRAPPER_KEYS) {
+    if (d[k] !== null && typeof d[k] === 'object') return resolveData(d[k], depth + 1);
+  }
+  return d;
+}
+
+function extract(raw) {
+  if (typeof raw === 'string') return raw;
+  const d = resolveData(raw);
+  const pref = RESPONSE_FIELD;
+  if (pref !== 'auto' && d && d[pref] !== undefined) return String(d[pref]);
+  if (typeof d === 'string') return d;
+  if (d && typeof d === 'object' && !Array.isArray(d)) return d;
+  return String(d);
+}
+
+// ── KEY FORMATTING HELPERS ─────────────────────────────────────────────────
+
+const ICON_MAP = [
+  [/decision|ruling|call|verdict/,         '📋'],
+  [/restart|resume|kick|throw|goal_kick/,  '🔄'],
+  [/disciplin|card|sanction|punish|caution/,'🟨'],
+  [/procedure|step|process|protocol/,      '📝'],
+  [/exception|warning|special|caveat/,     '⚠️'],
+  [/note|additional|info|detail|context/,  '📌'],
+  [/var|review|technology|video/,          '📺'],
+  [/penalty|spot/,                         '⚽'],
+  [/time|duration|period/,                 '⏱️'],
+  [/player|person|individual/,             '👤'],
+  [/team|club|side/,                       '🏟️'],
+];
+
+function getIcon(key) {
+  const k = key.toLowerCase();
+  for (const [pattern, icon] of ICON_MAP) if (pattern.test(k)) return icon;
+  return '•';
+}
+
+function formatKey(key) {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+const GREETING_PATTERNS = /^(conversational_greeting|greeting|intro|introduction|summary|overview|answer)$/i;
+const SOURCE_PATTERNS   = /^(source|sources|reference|references|citation|citations|law|rule)$/i;
+const SKIP_PATTERNS     = /^(action|status|type|version|id|timestamp|created_at|updated_at|internal_timeline_analysis|internal_exception_check)$/i;
+
+// ── BUBBLE RENDERER ────────────────────────────────────────────────────────
+
+function buildBotBubble(content) {
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble bot';
+
+  if (typeof content === 'string') {
+    bubble.innerHTML = formatText(content);
+    return bubble;
+  }
+
+  const NULL_VALUES = /^(n\/a|none|null|nil|undefined|n\.a\.|-)$/i;
+  const isEmpty = v => v === null || v === undefined || (typeof v === 'string' && (v.trim() === '' || NULL_VALUES.test(v.trim())));
+
+  const entries = Object.entries(content).filter(([k, v]) => !SKIP_PATTERNS.test(k) && !isEmpty(v));
+
+  const greetingEntry = entries.find(([k]) => GREETING_PATTERNS.test(k));
+  const sourceEntry   = entries.find(([k]) => SOURCE_PATTERNS.test(k));
+  const mainEntries   = entries.filter(([k]) =>
+    !GREETING_PATTERNS.test(k) && !SOURCE_PATTERNS.test(k));
+
+  if (!greetingEntry && !sourceEntry && mainEntries.length === 1 && typeof mainEntries[0][1] === 'string') {
+    bubble.innerHTML = formatText(mainEntries[0][1]);
+    return bubble;
+  }
+
+  if (greetingEntry) {
+    const g = document.createElement('p');
+    g.className = 'resp-greeting';
+    g.textContent = greetingEntry[1];
+    bubble.appendChild(g);
+  }
+
+  if (mainEntries.length) {
+    const wrap = document.createElement('div');
+    wrap.className = 'resp-sections';
+    mainEntries.forEach(([key, val]) => {
+      const sec = document.createElement('div');
+      sec.className = 'resp-section';
+      const icon  = getIcon(key);
+      const label = formatKey(key);
+      const text  = typeof val === 'object' ? JSON.stringify(val, null, 2) : String(val);
+      sec.innerHTML = `<span class="resp-label">${icon} ${label}</span><div class="resp-text">${formatText(text)}</div>`;
+      wrap.appendChild(sec);
+    });
+    bubble.appendChild(wrap);
+  }
+
+  if (sourceEntry) {
+    const s = document.createElement('div');
+    s.className = 'resp-source';
+    s.textContent = '📖 ' + sourceEntry[1];
+    bubble.appendChild(s);
+  }
+
+  if (!greetingEntry && !mainEntries.length && !sourceEntry) {
+    bubble.innerHTML = formatText(entries.map(([k,v])=>`${formatKey(k)}: ${v}`).join('\n'));
+  }
+
+  return bubble;
+}
+
+function formatText(text) {
+  return text
+    .split(/\n{2,}/) 
+    .map(para => `<p style="margin-bottom: 8px;">${
+      para.replace(/\n/g,'<br/>')
+          .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+          .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    }</p>`)
+    .join('');
+}
+
+const BOT_SVG=`<svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.5" stroke="white" stroke-width="1.4"/><polygon points="10,7.2 11.8,5.8 14.2,8.2 12.8,10 10,9.2" fill="white"/><polygon points="10,7.2 8.2,5.8 5.8,8.2 7.2,10 10,9.2" fill="white"/><polygon points="10,12.8 11.8,14.2 14.2,11.8 12.8,10 10,10.8" fill="white"/><polygon points="10,12.8 8.2,14.2 5.8,11.8 7.2,10 10,10.8" fill="white"/></svg>`;
+
+function appendMsg(role, content) {
+  const isUser=role==='user', isErr=role==='err';
+  const group=document.createElement('div'); group.className='msg-group';
+  const row=document.createElement('div'); row.className='msg-row'+(isUser?' user':'');
+  const av=document.createElement('div'); av.className='avatar '+(isUser?'user':'bot'); av.innerHTML=isUser?'U':BOT_SVG;
+
+  let bubble;
+  if (isUser) {
+    bubble=document.createElement('div'); bubble.className='bubble user'; bubble.textContent=content;
+  } else if (isErr) {
+    bubble=document.createElement('div'); bubble.className='bubble err'; bubble.textContent=content;
+  } else {
+    bubble = buildBotBubble(content);
+  }
+
+  const time=document.createElement('div'); time.className='msg-time';
+  time.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(isUser){row.appendChild(time);row.appendChild(bubble);row.appendChild(av);}
+  else{row.appendChild(av);row.appendChild(bubble);row.appendChild(time);}
+  group.appendChild(row); chatBody.insertBefore(group,anchor); return group;
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function appendLoader(){
+  const group=document.createElement('div');group.className='typing-row';
+  const av=document.createElement('div');av.className='avatar bot';av.innerHTML=BOT_SVG;
+  const tb=document.createElement('div');tb.className='typing-bubble';
+  tb.innerHTML='<div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>';
+  group.appendChild(av);group.appendChild(tb);chatBody.insertBefore(group,anchor);return group;
+}
+function scrollBottom(){anchor.scrollIntoView({behavior:'smooth'});}
+</script>
+</body>
+</html>
